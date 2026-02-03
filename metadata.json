@@ -1,0 +1,5 @@
+{
+  "name": "Michael Prompt 分鏡腳本產生器",
+  "description": "專為小白設計的 Spec Coding 工具。輸入您的構想與分鏡，一鍵生成可直接在 Cursor AI 編輯器中執行的 P0-P5 完整提示詞腳本 (Prompt Pack)。",
+  "requestFramePermissions": []
+}
