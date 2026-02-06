@@ -1685,7 +1685,7 @@ export const generateSpec = async (scenes: Scene[], techStack: string = 'Auto', 
     try {
         const prompt = buildPrompt(scenes, techStack, projectType);
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
+            model: 'gemini-3-flash-preview',
             contents: prompt,
         });
         return response.text;
