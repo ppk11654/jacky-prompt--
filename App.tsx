@@ -2,6 +2,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import type { Scene, Storyboard } from './types';
 import { generateSpec } from './services/geminiService';
+import { generateCopilotSpec } from './services/copilotService';
 import SceneCard from './components/SceneCard';
 import PlusIcon from './components/icons/PlusIcon';
 import ClipboardIcon from './components/icons/ClipboardIcon';
@@ -125,6 +126,7 @@ function App() {
   const [scenes, setScenes] = useState<Scene[]>([createEmptyScene()]);
   const [projectType, setProjectType] = useState('Fullstack');
   const [isLoading, setIsLoading] = useState(false);
+  const [isCopilotLoading, setIsCopilotLoading] = useState(false);
   const [generatedSpec, setGeneratedSpec] = useState<string | null>(null);
 
   const [storyboards, setStoryboards] = useState<Storyboard[]>(loadStoryboardsFromStorage);
@@ -268,6 +270,34 @@ function App() {
     }
   };
 
+  const handleGenerateCopilotSpec = async () => {
+    // Basic validation
+    if (scenes.some(s => !s.title && !s.objective)) {
+      if (!confirm("部分場景資訊似乎未填寫完整，確定要開始生成嗎？")) return;
+    }
+
+    setIsCopilotLoading(true);
+    try {
+      const spec = await generateCopilotSpec(scenes, 'Auto', projectType);
+      setGeneratedSpec(spec);
+
+      // Auto-save when generated
+      if (activeStoryboardId) {
+        const now = new Date().toISOString();
+        const newStoryboards = storyboards.map(sb =>
+          sb.id === activeStoryboardId
+            ? { ...sb, generatedSpec: spec, generatedAt: now, updatedAt: now }
+            : sb
+        );
+        setStoryboards(newStoryboards);
+      }
+    } catch (error) {
+      alert('生成 Copilot Prompt 失敗，請稍後再試');
+    } finally {
+      setIsCopilotLoading(false);
+    }
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-gray-900 text-gray-100">
       <HistorySidebar
@@ -300,10 +330,10 @@ function App() {
             </button>
             <button
               onClick={handleGenerateSpec}
-              disabled={isLoading}
+              disabled={isLoading || isCopilotLoading}
               className={`flex items-center space-x-2 px-4 py-2 rounded-md font-medium text-white transition-all transform active:scale-95 shadow-lg ${isLoading
-                  ? 'bg-gray-600 cursor-not-allowed opacity-75'
-                  : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-indigo-500/20'
+                ? 'bg-gray-600 cursor-not-allowed opacity-75'
+                : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-indigo-500/20'
                 }`}
             >
               {isLoading ? (
@@ -318,6 +348,30 @@ function App() {
                 <>
                   <span className="text-lg">✨</span>
                   <span>生成 Prompt Pack</span>
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={handleGenerateCopilotSpec}
+              disabled={isLoading || isCopilotLoading}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-md font-medium text-white transition-all transform active:scale-95 shadow-lg ${isCopilotLoading
+                ? 'bg-gray-600 cursor-not-allowed opacity-75'
+                : 'bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-500 hover:to-blue-500 shadow-teal-500/20'
+                }`}
+            >
+              {isCopilotLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>生成中...</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-lg">🤖</span>
+                  <span>生成 Prompt Pack (GitHub Copilot)</span>
                 </>
               )}
             </button>
@@ -340,8 +394,8 @@ function App() {
                     key={type.value}
                     onClick={() => setProjectType(type.value)}
                     className={`cursor-pointer rounded-lg p-4 border-2 transition-all relative ${projectType === type.value
-                        ? 'border-indigo-500 bg-indigo-900/20 shadow-md'
-                        : 'border-gray-700 bg-gray-800 hover:border-gray-600 hover:bg-gray-750'
+                      ? 'border-indigo-500 bg-indigo-900/20 shadow-md'
+                      : 'border-gray-700 bg-gray-800 hover:border-gray-600 hover:bg-gray-750'
                       }`}
                   >
                     {type.recommended && (
@@ -407,8 +461,8 @@ function App() {
                     key={scene.id}
                     onClick={() => setActiveSceneIndex(index)}
                     className={`flex items-center space-x-2 px-3 py-2 rounded-t-lg cursor-pointer transition-colors whitespace-nowrap border-b-2 ${activeSceneIndex === index
-                        ? 'bg-gray-700 border-indigo-500 text-white'
-                        : 'bg-gray-800 border-transparent text-gray-400 hover:text-gray-300 hover:bg-gray-750'
+                      ? 'bg-gray-700 border-indigo-500 text-white'
+                      : 'bg-gray-800 border-transparent text-gray-400 hover:text-gray-300 hover:bg-gray-750'
                       }`}
                   >
                     <span className="text-sm font-medium max-w-[100px] truncate">{scene.title || `場景 ${index + 1}`}</span>
