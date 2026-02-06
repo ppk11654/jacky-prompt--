@@ -3,13 +3,13 @@ import { GoogleGenAI } from "@google/genai";
 import { Scene } from '../types';
 
 if (!process.env.API_KEY) {
-  throw new Error("API_KEY environment variable not set");
+    throw new Error("API_KEY environment variable not set");
 }
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const SYSTEM_INSTRUCTION = `
-你是「Michael Cursor Prompt 編譯器」（簡化版）。
+你是「Jacky Cursor Prompt 編譯器」（簡化版）。
 
 你的唯一任務：把使用者提供的專案需求編譯成「一整包可直接貼到 Cursor 執行的 prompts」（P0~P6）。
 
@@ -1652,7 +1652,7 @@ const ItemList = {
 `;
 
 function buildPrompt(scenes: Scene[], techStack: string, projectType: string): string {
-  const storyboardContent = scenes.map((scene, index) => `
+    const storyboardContent = scenes.map((scene, index) => `
     場景 ${index + 1}: ${scene.title || '未命名'}
     - 目標: ${scene.objective || '未指定'}
     - 畫面: ${scene.layout || '未指定'}
@@ -1660,15 +1660,15 @@ function buildPrompt(scenes: Scene[], techStack: string, projectType: string): s
     - 參考資料/API文件: ${scene.references || '無'}
   `).join('\n');
 
-  // 注意：這裡我們模擬了「編譯器」接收到所有資訊的狀態
-  // 雖然 System Instruction 寫得像是要「詢問」，但我們透過這個 Prompt 直接提供答案。
-  return `
+    // 注意：這裡我們模擬了「編譯器」接收到所有資訊的狀態
+    // 雖然 System Instruction 寫得像是要「詢問」，但我們透過這個 Prompt 直接提供答案。
+    return `
     ${SYSTEM_INSTRUCTION}
 
     ---
     **[模擬使用者回應]**
 
-    Michael 編譯器你好，我已經想好我的專案需求了，請直接幫我編譯成 P0~P6 的 Prompts。
+    Jacky 編譯器你好，我已經想好我的專案需求了，請直接幫我編譯成 P0~P6 的 Prompts。
 
     **1. 專案類型選擇：**
     我選擇：${projectType}
@@ -1682,18 +1682,18 @@ function buildPrompt(scenes: Scene[], techStack: string, projectType: string): s
 }
 
 export const generateSpec = async (scenes: Scene[], techStack: string = 'Auto', projectType: string = 'Fullstack'): Promise<string> => {
-  try {
-    const prompt = buildPrompt(scenes, techStack, projectType);
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-pro',
-      contents: prompt,
-    });
-    return response.text;
-  } catch (error) {
-    console.error("Error generating spec:", error);
-    if (error instanceof Error) {
-        return `生成 Cursor Prompts 時發生錯誤：${error.message}。請檢查主控台以獲取更多詳細資訊。`;
+    try {
+        const prompt = buildPrompt(scenes, techStack, projectType);
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-pro',
+            contents: prompt,
+        });
+        return response.text;
+    } catch (error) {
+        console.error("Error generating spec:", error);
+        if (error instanceof Error) {
+            return `生成 Cursor Prompts 時發生錯誤：${error.message}。請檢查主控台以獲取更多詳細資訊。`;
+        }
+        return "生成 Cursor Prompts 時發生未知錯誤。";
     }
-    return "生成 Cursor Prompts 時發生未知錯誤。";
-  }
 };
